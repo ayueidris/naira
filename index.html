@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Naira Inara Birthday Photobooth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Pacifico&family=Dancing+Script:wght@700&family=Great+Vibes&family=Mali:wght@700&family=Cinzel:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+/* Kiosk photobooth for iPad: black frame, 3 snaps, receipt print */
+:root{--yel:#ffd23f}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#ffe3ee;color:#d6336c;font:500 17px/1.4 Fredoka,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+#stage{position:fixed;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;padding:max(14px,env(safe-area-inset-top)) 18px max(14px,env(safe-area-inset-bottom))}
+.title{font:400 clamp(40px,7vw,72px) Pacifico,cursive;text-align:center;line-height:1.05;padding:4px 0 14px}
+.mid{display:grid;place-items:center;min-height:0}
+.view{position:relative;border-radius:26px;overflow:hidden;background:#f7c6d6;border:8px solid #fff;box-shadow:0 10px 30px rgba(214,51,108,.25)}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.thumbs{display:flex;gap:12px;justify-content:center;padding:14px 0 6px}
+.thumbs div{width:min(13vw,110px);aspect-ratio:4/5;border-radius:14px;border:3px dashed #f49ab8;background:#fff center/cover;display:grid;place-items:center;color:#f49ab8;font-weight:700;font-size:26px}
+.thumbs div.on{border:3px solid #fff;color:transparent;box-shadow:0 4px 12px rgba(214,51,108,.25)}
+.year{text-align:center;font:700 clamp(26px,4.5vw,44px)/1.2 Fredoka,sans-serif}
+.ov{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none;text-shadow:0 4px 22px rgba(0,0,0,.6)}
+.ov .lab{font-size:clamp(24px,4vw,40px);font-weight:600}
+.ov .num{font-size:clamp(120px,24vw,260px);font-weight:700;line-height:1}
+.ov.ready .num{color:var(--yel)}
+#look{position:absolute;font-weight:700;font-size:clamp(22px,3.4vw,34px);color:var(--yel);text-shadow:0 3px 14px rgba(0,0,0,.7);pointer-events:none;animation:nud 1s ease-in-out infinite alternate}
+#look.top{top:16px;left:50%;transform:translateX(-50%)}#look.left{left:16px;top:50%}#look.right{right:16px;top:50%}
+@keyframes nud{to{translate:0 -8px}}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#flash.on{animation:fl .55s ease-out}
+@keyframes fl{0%{opacity:1}100%{opacity:0}}
+#idle{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.25)}
+#idle.err{position:fixed;inset:0;z-index:4;background:rgba(0,0,0,.75);overflow:auto}
+#camErr{background:rgba(0,0,0,.8);border-radius:16px;padding:16px 18px;max-width:480px;font-size:17px}
+#camErr button{margin-top:12px;font:700 18px Fredoka,sans-serif;min-height:52px;padding:0 22px;border-radius:999px;border:0;background:#fff;color:#111}
+#startBtn{font:700 clamp(30px,5vw,48px) Fredoka,sans-serif;color:#fff;background:#f06292;border:0;border-radius:999px;padding:.55em 1.4em;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.05)}}
+#idleQr{position:absolute;right:14px;bottom:14px;background:#fff;color:#111;border-radius:14px;padding:8px;width:clamp(110px,15vw,150px);text-align:center;font-size:13px;font-weight:600;line-height:1.2}
+#idleQr svg{width:100%;height:auto;display:block}
+#msg{position:absolute;inset:0;display:grid;place-content:center;text-align:center;background:rgba(0,0,0,.6);font-size:clamp(26px,4vw,40px);font-weight:600}
+#gear{position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:#777;font-size:22px;z-index:5}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:20px;z-index:8}
+.card{background:#fff;color:#111;border-radius:26px;padding:24px;width:min(94vw,900px);max-height:94vh;overflow:auto;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px;align-items:center}
+@media(max-width:700px),(orientation:portrait) and (max-width:900px){.card{grid-template-columns:minmax(0,1fr)}}
+.card .rc{background:#eee;border-radius:14px;padding:12px;display:grid;place-items:center;max-height:70vh;overflow:auto}
+.card .rc img{width:100%;max-width:260px;display:block;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.card h2{font-size:clamp(30px,4vw,44px);margin:0 0 4px;line-height:1.05}
+.card .qrbig{width:min(260px,60vw);margin:12px 0}
+.card .qrbig svg{width:100%;height:auto;display:block}
+.st{font-size:18px;color:#555;margin:0 0 14px}
+.btns{display:flex;flex-wrap:wrap;gap:12px}
+.b{font:700 20px Fredoka,sans-serif;min-height:58px;padding:0 26px;border-radius:999px;border:2px solid #ddd;background:#fff;color:#111;flex:1 1 180px}
+.b.go{background:var(--yel);border-color:var(--yel)}
+.set{background:#fff;color:#111;border-radius:22px;padding:22px;width:min(94vw,560px);max-height:92vh;overflow:auto;-webkit-user-select:text;user-select:text}
+.set h2{margin:0 0 4px}.set p{margin:0 0 12px;color:#666;font-size:14px}
+.set label{display:block;font-weight:600;margin:14px 0 6px}
+.set input,.set select{width:100%;font:500 16px Fredoka,sans-serif;min-height:46px;padding:0 12px;border:2px solid #ddd;border-radius:12px;background:#fff;color:#111}
+.set .b{min-height:48px;font-size:17px}
+#bleSt{font-size:15px;margin:8px 0 0;color:#555}
+.hide{display:none!important}
+@media(prefers-reduced-motion:reduce){#startBtn,#look{animation:none}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="title">Naira Inara</div>
+  <div class="mid" id="mid">
+    <div class="view" id="view">
+      <video id="vid" playsinline muted autoplay></video>
+      <div class="ov" id="ov"><div class="lab"></div><div class="num"></div></div>
+      <div id="look" class="hide top">↑ Look at the camera ↑</div>
+      <div id="flash"></div>
+      <div id="msg" class="hide"></div>
+      <div id="idle"><div style="display:grid;gap:16px;justify-items:center;text-align:center;padding:20px"><button id="startBtn">Tap to start</button><div id="camErr" class="hide"></div></div><div id="idleQr" class="hide"><div id="idleQrS"></div>All photos</div></div>
+    </div>
+  </div>
+  <div class="thumbs" id="thumbs"></div>
+  <div class="year">is turning 2 🎂</div>
+</div>
+<button id="gear" aria-label="Settings (press and hold)">⚙</button>
+
+<div class="modal hide" id="done"><div class="card">
+  <div class="rc"><img id="rcImg" alt="Receipt preview"></div>
+  <div>
+    <h2>Here are your photos! 🎉</h2>
+    <div class="qrbig" id="qrBig"></div>
+    <p class="st" id="driveSt"></p><p class="st" id="doneSt"></p>
+    <div class="btns"><button class="b go hide" id="printBtn">🖨 Print receipt</button><button class="b" id="againBtn">Done</button></div>
+  </div>
+</div></div>
+
+<div class="modal hide" id="settings"><div class="set">
+  <h2>Booth settings</h2>
+  <p>Only for the person running the booth. Saved on this iPad. <b>Birthday booth version 1</b> (no QR on receipt).</p>
+  <label for="sScript">Google Apps Script URL</label><input id="sScript" placeholder="https://script.google.com/macros/s/…/exec">
+  <label for="sKey">Secret key (same as in the script)</label><input id="sKey">
+  <div class="btns" style="margin-top:12px"><button class="b" id="pingBtn">Test Google Drive connection</button></div><p id="pingSt" style="margin:8px 0 0;font-size:15px"></p>
+  <label for="sFolder">Google Drive folder link (for the “All photos” QR)</label><input id="sFolder" placeholder="https://drive.google.com/drive/folders/…">
+  <label for="sMode">How to print</label>
+  <select id="sMode"><option value="ble">Bluetooth printer (needs the Bluefy browser)</option><option value="share">Print / send to printer app (tap Print each time)</option><option value="none">Don't print</option></select>
+  <label class="hide" for="sWidth">Paper width</label>
+  <select class="hide" id="sWidth"><option value="label">4×6 inch label (FlashLabel / shipping label printer)</option><option value="384">58 mm receipt (384 dots)</option><option value="576">80 mm receipt (576 dots)</option></select>
+  <label for="sOffX">Label position nudge (mm): left/right, up/down</label><div style="display:flex;gap:10px"><input id="sOffX" type="number" step="1" placeholder="0 (− = left, + = right)"><input id="sOffY" type="number" step="1" placeholder="0 (− = up, + = down)"></div>
+  <label class="hide" for="sStyle">Photo style on the print</label><select class="hide" id="sStyle"><option value="fine">Fine dots (recommended)</option><option value="halftone">Newspaper dots</option><option value="bold">Bold black &amp; white (no dots)</option></select>
+  <label for="sDev">Camera to use</label><select id="sDev"><option value="">Front camera (default)</option></select>
+  <label for="sZoom">Camera zoom (cuts off the wide edges)</label><select id="sZoom"><option value="1">1× (full wide view)</option><option value="1.15">1.15×</option><option value="1.3">1.3× (recommended)</option><option value="1.5">1.5×</option><option value="1.75">1.75×</option><option value="2">2×</option></select>
+  <label for="sCam">Where is the iPad camera?</label>
+  <select id="sCam"><option value="top">Top of the screen</option><option value="left">Left side</option><option value="right">Right side</option></select>
+  <div class="btns" style="margin-top:16px"><button class="b" id="bleBtn">Connect Bluetooth printer</button><button class="b" id="testBtn">Test print</button></div>
+  <p id="bleSt">Printer not connected.</p>
+  <div class="btns" style="margin-top:14px"><button class="b go" id="closeSet">Close</button></div>
+</div></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const TITLE='Naira Inara',YEAR='HAPPY BIRTHDAY',SHOTS=4,SNAP_SECS=3,DONE_SECS=60;
+const DEF={script:'',key:'',folder:'',mode:'share',width:'label',cam:'top'};
+let cfg=Object.assign({},DEF);try{Object.assign(cfg,JSON.parse(localStorage.getItem('naira-booth')||'{}'))}catch(e){}
+const saveCfg=()=>{try{localStorage.setItem('naira-booth',JSON.stringify(cfg))}catch(e){}};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let shots=[],busy=false,receipt=null,doneTimer=null,wake=null;
+
+// ---------- camera ----------
+let camErr='';
+async function startCam(){
+  try{if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error(location.protocol!=='https:'?'this page is not opened from an https:// link':'this browser has no camera access');
+    if(!$('vid').srcObject){const v=cfg.dev?{deviceId:{exact:cfg.dev},width:{ideal:1920},height:{ideal:1440}}:{facingMode:'user',width:{ideal:1920},height:{ideal:1440}};let st;try{st=await navigator.mediaDevices.getUserMedia({video:v,audio:false})}catch(e){if(!cfg.dev)throw e;st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false})}$('vid').srcObject=st}
+    await $('vid').play();for(let i=0;i<30&&!$('vid').videoWidth;i++)await wait(100);camErr=$('vid').videoWidth?'':'the camera did not start'}
+  catch(e){camErr=e.name==='NotAllowedError'?'camera permission was blocked':(e.message||String(e))}
+  return !camErr;
+}
+function showCamErr(){$('camErr').innerHTML=`<b>The camera can't start</b> (${camErr}).<br>Open the booth from its https:// link in Safari and tap Allow for the camera.<br><button id="sampleBtn">Preview the strip with sample photos</button>`;
+  $('camErr').classList.remove('hide');$('idle').classList.add('err');$('sampleBtn').onclick=samplePreview}
+function sample(i){const c=document.createElement('canvas');c.width=640;c.height=480;const x=c.getContext('2d'),cols=[['#ff9a8b','#ff6a88'],['#8ec5fc','#e0c3fc'],['#a8e063','#56ab2f']][i];
+  const g=x.createLinearGradient(0,0,640,480);g.addColorStop(0,cols[0]);g.addColorStop(1,cols[1]);x.fillStyle=g;x.fillRect(0,0,640,480);
+  x.fillStyle='rgba(255,255,255,.9)';[[220,240],[420,240]].forEach(([a,b])=>{x.beginPath();x.arc(a,b,95,0,7);x.fill()});
+  x.fillStyle='#333';[[190,220],[250,220],[390,220],[450,220]].forEach(([a,b])=>{x.beginPath();x.arc(a,b,12,0,7);x.fill()});
+  x.lineWidth=8;x.strokeStyle='#333';x.lineCap='round';[[220,255],[420,255]].forEach(([a,b])=>{x.beginPath();x.arc(a,b,40,.2,Math.PI-.2);x.stroke()});
+  x.fillStyle='#fff';x.font='700 44px Fredoka, sans-serif';x.textAlign='center';x.fillText('Sample photo '+(i+1),320,430);return c}
+async function samplePreview(){if(busy)return;busy=true;$('idle').classList.remove('err');$('camErr').classList.add('hide');$('idle').classList.add('hide');shots=Array.from({length:SHOTS},(_,i)=>sample(i%3));thumbs();await finish()}
+function fitView(){const r=$('mid').getBoundingClientRect(),w=Math.min(r.width,r.height*4/5);$('view').style.width=w+'px';$('view').style.height=w*5/4+'px'}
+new ResizeObserver(fitView).observe($('mid'));
+const ASPECT=4/5;
+function applyZoom(){$('vid').style.transform=`scaleX(-1) scale(${+cfg.zoom||1.3})`}
+function grab(){const v=$('vid'),vw=v.videoWidth,vh=v.videoHeight,z=+cfg.zoom||1.3,tw=Math.min(vw,vh*ASPECT)/z,th=tw/ASPECT;
+  const c=document.createElement('canvas');c.width=Math.round(tw);c.height=Math.round(th);const x=c.getContext('2d');
+  x.translate(c.width,0);x.scale(-1,1);x.drawImage(v,(vw-tw)/2,(vh-th)/2,tw,th,0,0,c.width,c.height);return c}
+function showMsg(h){$('msg').innerHTML=h;$('msg').classList.toggle('hide',!h)}
+function thumbs(){$('thumbs').innerHTML=Array.from({length:SHOTS},(_,i)=>shots[i]?`<div class="on" style="background-image:url(${shots[i].toDataURL('image/jpeg',.6)})"></div>`:`<div>${i+1}</div>`).join('')}
+
+// ---------- session ----------
+async function phase(label,secs,ready){const o=$('ov');o.classList.toggle('ready',!!ready);o.querySelector('.lab').textContent=label;
+  for(let s=secs;s>0;s--){o.querySelector('.num').textContent=s;await wait(1000)}o.querySelector('.lab').textContent='';o.querySelector('.num').textContent=''}
+function flash(){const f=$('flash');f.classList.remove('on');void f.offsetWidth;f.classList.add('on')}
+async function session(){
+  if(busy||!$('vid').videoWidth)return;busy=true;shots=[];thumbs();$('idle').classList.add('hide');
+  try{wake=await navigator.wakeLock?.request('screen')}catch(e){}
+  $('look').className=cfg.cam;
+  for(let i=0;i<SHOTS;i++){
+    if(i>0)await wait(700);
+    await phase(`Photo ${i+1} of ${SHOTS} — smile!`,SNAP_SECS);
+    flash();shots[i]=grab();thumbs();
+  }
+  $('look').className='hide';
+  await finish();
+}
+$('startBtn').onclick=async()=>{if(busy)return;$('camErr').classList.add('hide');$('idle').classList.remove('err');if(!$('vid').videoWidth){$('startBtn').textContent='Starting camera…';await startCam();$('startBtn').textContent='Tap to start'}if(!$('vid').videoWidth){showCamErr();return}session()};
+
+
+// ---------- night-sky pattern (Al-Battani was an astronomer) ----------
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function sparkle(x,cx,cy,r){x.beginPath();x.moveTo(cx,cy-r);x.quadraticCurveTo(cx,cy,cx+r,cy);x.quadraticCurveTo(cx,cy,cx,cy+r);x.quadraticCurveTo(cx,cy,cx-r,cy);x.quadraticCurveTo(cx,cy,cx,cy-r);x.fill()}
+function crescent(x,cx,cy,r){x.fillStyle='#fff';x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.fillStyle='#000';x.beginPath();x.arc(cx+r*.42,cy-r*.22,r*.86,0,7);x.fill();x.fillStyle='#fff'}
+function planet(x,cx,cy,r,lw){x.lineWidth=lw;x.strokeStyle='#fff';x.save();x.translate(cx,cy);x.rotate(-.42);x.beginPath();x.ellipse(0,0,r*1.75,r*.48,0,0,7);x.stroke();x.restore();
+  x.fillStyle='#000';x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.stroke();x.fillStyle='#fff';x.beginPath();x.arc(cx-r*.3,cy-r*.3,r*.18,0,7);x.fill()}
+function constel(x,pts,lw,dr){x.strokeStyle='#fff';x.lineWidth=lw;x.beginPath();pts.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.stroke();pts.forEach(([a,b])=>{x.beginPath();x.arc(a,b,dr,0,7);x.fill()})}
+function deco(x,W,H,s,avoid,title,foot){
+  const R=rng(11),ins=Math.round(8*s);x.fillStyle='#fff';x.strokeStyle='#fff';
+  x.lineWidth=Math.max(1,2*s);x.setLineDash([3*s,6*s]);x.strokeRect(ins,ins,W-2*ins,H-2*ins);x.setLineDash([]);
+  const free=(px,py,r)=>px-r>ins+2&&px+r<W-ins-2&&py-r>ins+2&&py+r<H-ins-2&&!avoid.some(([ax,ay,aw,ah])=>px+r>ax&&px-r<ax+aw&&py+r>ay&&py-r<ay+ah);
+  let n=0;for(let t=0;t<4000&&n<Math.round(W*H/2600/s/s);t++){const px=R()*W,py=R()*H,big=R()<.22,r=(big?5+R()*5:1.2+R()*1.6)*s;
+    if(!free(px,py,r+2*s))continue;n++;if(big)sparkle(x,px,py,r);else{x.beginPath();x.arc(px,py,r*.7,0,7);x.fill()}}
+  const [tcy,tw]=title,side=(W-tw)/2,ic=Math.min(side*.26,28*s);
+  if(ic>6*s){crescent(x,side/2+ins/2,tcy,ic);planet(x,W-side/2-ins/2,tcy,ic*.72,Math.max(1.5,2.2*s))}
+  const [fy,fh,fw]=foot,lw=Math.max(1,1.4*s),dr=2.6*s,cx=W/2,half=fw/2+14*s,span=Math.min(W/2-half-ins-8*s,120*s);
+  if(span>30*s){const m=fy+fh/2,L=cx-half,Rr=cx+half;
+    constel(x,[[L-span,m-fh*.12],[L-span*.7,m+fh*.18],[L-span*.42,m-fh*.05],[L-span*.15,m+fh*.14]],lw,dr);
+    constel(x,[[Rr+span*.15,m-fh*.16],[Rr+span*.45,m+fh*.1],[Rr+span*.72,m-fh*.12],[Rr+span,m+fh*.16]],lw,dr)}
+}
+
+// ---------- full-colour strip (saved to Drive) ----------
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function fitFont(c,t,max,size){let f=size;c.font=`700 ${f}px Fredoka, sans-serif`;while(c.measureText(t).width>max&&f>14){f-=1;c.font=`700 ${f}px Fredoka, sans-serif`}return f}
+// ---------- film-strip frame ----------
+const SCRIPT=n=>`400 ${n}px Pacifico, "Comic Sans MS", cursive`;
+function fitScript(c,t,max,size){let f=size;c.font=SCRIPT(f);while(c.measureText(t).width>max&&f>14){f-=1;c.font=SCRIPT(f)}return f}
+function holes(x,X,Y,w,h,s){const hw=Math.round(15*s),hh=Math.round(20*s),step=Math.round(34*s),ox=Math.round(11*s),r=Math.max(2,3*s);x.fillStyle='#fff';
+  for(let yy=Y+Math.round(10*s);yy+hh<=Y+h-Math.round(6*s);yy+=step){rr(x,X+ox,yy,hw,hh,r);x.fill();rr(x,X+w-ox-hw,yy,hw,hh,r);x.fill()}}
+function bwPhoto(x,img,a,b,w,h){x.drawImage(img,a,b,w,h);const d=x.getImageData(a,b,w,h),p=d.data;
+  for(let i=0;i<p.length;i+=4){let l=.299*p[i]+.587*p[i+1]+.114*p[i+2];l=(l-128)*1.12+128;p[i]=p[i+1]=p[i+2]=l}x.putImageData(d,a,b)}
+function filmStrip(x,X,k,smooth){
+  const sw=Math.round(384*k),side=Math.round(40*k),pw=sw-2*side,ph=Math.round(pw*.75),gap=Math.round(12*k),head=Math.round(118*k),foot=Math.round(92*k);
+  const H=head+SHOTS*ph+(SHOTS-1)*gap+foot;
+  x.fillStyle='#000';x.fillRect(X,0,sw,H);holes(x,X,0,sw,H,k);
+  const rects=shots.map((_,i)=>[X+side,head+i*(ph+gap),pw,ph]);
+  rects.forEach(([a,b,w,h],i)=>smooth?bwPhoto(x,shots[i],a,b,w,h):x.drawImage(shots[i],a,b,w,h));
+  x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';
+  fitScript(x,TITLE,pw-Math.round(8*k),Math.round(66*k));x.fillText(TITLE,X+sw/2,head/2+4*k);
+  fitScript(x,YEAR,pw,Math.round(56*k));x.fillText(YEAR,X+sw/2,H-foot/2+2*k);
+  return {sw,H,rects};
+}
+const stripH=k=>{const pw=Math.round(384*k)-2*Math.round(40*k);return Math.round(118*k)+SHOTS*Math.round(pw*.75)+(SHOTS-1)*Math.round(12*k)+Math.round(92*k)};
+const SUB='is turning two',SCHOOL='';
+function spaced(x,t,cx,cy,sp){const ws=[...t].map(ch=>x.measureText(ch).width),tot=ws.reduce((a,b)=>a+b,0)+sp*(t.length-1);let px=cx-tot/2;x.textAlign='left';[...t].forEach((ch,i)=>{x.fillText(ch,px,cy);px+=ws[i]+sp});x.textAlign='center';return tot}
+function fitSpaced(x,t,max,size,sp){let f=size;for(;f>10;f--){x.font=`600 ${f}px Cinzel, Georgia, serif`;const w=[...t].reduce((a,ch)=>a+x.measureText(ch).width,0)+sp*(t.length-1);if(w<=max)break}return f}
+function whiteStrip(x,X,Y,sw,H,mode){
+  const s=sw/400,pad=Math.round(18*s),gap=Math.round(8*s),T=Math.round(250*s),pw=Math.round(sw-2*pad),ph=Math.floor((H-pad-T-(SHOTS-1)*gap)/SHOTS),rects=[];
+  x.fillStyle='#fff';x.fillRect(X,Y,sw,H);
+  shots.forEach((sh,i)=>{const a=Math.round(X+pad),b=Math.round(Y+pad+i*(ph+gap));drawCover(x,sh,a,b,pw,ph);rects.push([a,b,pw,ph])});
+  if(mode==='bw')rects.forEach(([a,b,w,h])=>{const d=x.getImageData(a,b,w,h),p=d.data;for(let i=0;i<p.length;i+=4){let l=.299*p[i]+.587*p[i+1]+.114*p[i+2];l=(l-128)*1.1+128;p[i]=p[i+1]=p[i+2]=l}x.putImageData(d,a,b)});
+  const ty=Y+H-T,cx=X+sw/2;x.fillStyle='#111';x.strokeStyle='#111';x.textBaseline='middle';x.textAlign='center';
+  fitScript(x,TITLE,pw-10*s,Math.round(64*s));x.fillText(TITLE,cx,ty+78*s);
+  x.lineWidth=Math.max(1,2*s);x.beginPath();x.moveTo(cx-34*s,ty+132*s);x.lineTo(cx+34*s,ty+132*s);x.stroke();
+  fitSpaced(x,YEAR,pw,Math.round(30*s),6*s);spaced(x,YEAR,cx,ty+168*s,6*s);
+  fitSpaced(x,SCHOOL,pw-8*s,Math.round(24*s),4*s);spaced(x,SCHOOL,cx,ty+208*s,4*s);
+  return rects;
+}
+function drawCover(x,img,a,b,w,h){if(!w||!h)return;const iw=img.width,ih=img.height,r=Math.max(w/iw,h/ih),cw=w/r,ch=h/r;x.drawImage(img,(iw-cw)/2,(ih-ch)/2,cw,ch,a,b,w,h)}
+function gridLayout(x,ox,oy,W,H,mode){
+  // 2x2 grid of uncropped 4:3 photos, text block underneath
+  const s=W/800,m=Math.round(26*s),g=Math.round(14*s),pw=Math.floor((W-2*m-g)/2),ph=Math.round(pw*3/4),rects=[];
+  x.fillStyle='#fff';x.fillRect(ox,oy,W,H);
+  shots.forEach((sh,i)=>{const a=Math.round(ox+m+(i%2)*(pw+g)),b=Math.round(oy+m+Math.floor(i/2)*(ph+g));drawCover(x,sh,a,b,pw,ph);rects.push([a,b,pw,ph])});
+  if(mode==='bw')rects.forEach(([a,b,w,h])=>{const d=x.getImageData(a,b,w,h),p=d.data;for(let i=0;i<p.length;i+=4){let l=.299*p[i]+.587*p[i+1]+.114*p[i+2];l=(l-128)*1.1+128;p[i]=p[i+1]=p[i+2]=l}x.putImageData(d,a,b)});
+  const top=oy+m+2*ph+g,cy=top+(oy+H-top)/2,cx=ox+W/2,tw=W-2*m-40*s;
+  x.fillStyle='#111';x.strokeStyle='#111';x.textBaseline='middle';x.textAlign='center';
+  fitScript(x,TITLE,tw,Math.round(120*s));x.fillText(TITLE,cx,cy-120*s);
+  x.lineWidth=Math.max(1,3*s);x.beginPath();x.moveTo(cx-60*s,cy-20*s);x.lineTo(cx+60*s,cy-20*s);x.stroke();
+  fitSpaced(x,YEAR,tw,Math.round(54*s),12*s);spaced(x,YEAR,cx,cy+50*s,12*s);
+  fitSpaced(x,SCHOOL,tw,Math.round(40*s),8*s);spaced(x,SCHOOL,cx,cy+122*s,8*s);
+  return rects;
+}
+function wideLayout(x,W,H,mode){
+  // landscape: 2x2 grid of uncropped 4:3 photos on the left, text running up a column on the right
+  const s=H/800,m=Math.round(24*s),g=Math.round(14*s),ph=Math.floor((H-2*m-g)/2),pw=Math.floor(ph*4/3),rects=[];
+  x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  shots.forEach((sh,i)=>{const a=m+(i%2)*(pw+g),b=m+Math.floor(i/2)*(ph+g);drawCover(x,sh,a,b,pw,ph);rects.push([a,b,pw,ph])});
+  if(mode==='bw')rects.forEach(([a,b,w,h])=>{const d=x.getImageData(a,b,w,h),p=d.data;for(let i=0;i<p.length;i+=4){let l=.299*p[i]+.587*p[i+1]+.114*p[i+2];l=(l-128)*1.1+128;p[i]=p[i+1]=p[i+2]=l}x.putImageData(d,a,b)});
+  const colX=m+2*pw+g,colW=W-m-colX,cx=colX+colW/2,len=H-2*m-20*s;
+  x.save();x.translate(cx,H/2);x.rotate(-Math.PI/2);x.fillStyle='#111';x.strokeStyle='#111';x.textBaseline='middle';x.textAlign='center';
+  fitScript(x,TITLE,len,Math.round(Math.min(78*s,colW*.55)));x.fillText(TITLE,0,-colW*.17);
+  const sub=YEAR+'  ·  '+SCHOOL;fitSpaced(x,sub,len,Math.round(Math.min(26*s,colW*.2)),5*s);spaced(x,sub,0,colW*.27,5*s);
+  x.restore();
+  return rects;
+}
+const PINK=['#f06292','#f8a5c2','#c9a7eb','#ffffff'],PASTEL=['#ffd1e1','#ffe4ef','#ead9fb','#ffd9e6'];
+function starPath(x,r){x.beginPath();for(let j=0;j<10;j++){const a=j*Math.PI/5-Math.PI/2,q=(j%2?.46:1)*r;x.lineTo(Math.cos(a)*q,Math.sin(a)*q)}x.closePath()}
+function heartPath(x,r){x.save();x.scale(r/12,r/12);x.beginPath();x.moveTo(0,9);x.bezierCurveTo(-15,0,-9,-13,0,-5);x.bezierCurveTo(9,-13,15,0,0,9);x.restore()}
+// Pink bunting: two swags, flags hanging straight down, little hearts and polka dots
+function pinkBand(x,X,Y,W,h){
+  const F=[['#f06292','heart'],['#f8a5c2','dots'],['#c9a7eb','plain'],['#ffffff','pinkdots']];
+  const swags=W>h*9?2:1,sw=W/swags,y0=Y+h*.06,sag=h*.22,L=h*.66,fw=L*.82,per=Math.max(3,Math.floor(sw/(fw*1.45)));let k=0;
+  for(let q=0;q<swags;q++){const sx=X+q*sw,yAt=t=>y0+4*sag*t*(1-t);
+    x.strokeStyle='#e0457b';x.lineWidth=Math.max(1.5,h*.04);x.lineCap='round';x.beginPath();for(let i=0;i<=40;i++){const t=i/40;i?x.lineTo(sx+t*sw,yAt(t)):x.moveTo(sx,yAt(0))}x.stroke();
+    for(let i=0;i<per;i++){const t=(i+.5)/per,cx=sx+t*sw,cy=yAt(t)-h*.01,[c,pat]=F[k++%F.length];
+      x.save();x.translate(cx,cy);x.beginPath();x.moveTo(-fw/2,0);x.lineTo(fw/2,0);x.quadraticCurveTo(fw*.2,L*.55,0,L);x.quadraticCurveTo(-fw*.2,L*.55,-fw/2,0);x.closePath();
+      x.fillStyle=c;x.fill();if(c==='#ffffff'){x.strokeStyle='#f8a5c2';x.lineWidth=h*.03;x.stroke()}x.clip();
+      if(pat==='dots'||pat==='pinkdots'){x.fillStyle=pat==='dots'?'#fff':'#f06292';const st=h*.14;for(let yy=st*.7,r=0;yy<L;yy+=st,r++)for(let xx=-fw/2+(r%2?st/2:0);xx<fw/2;xx+=st){x.beginPath();x.arc(xx,yy,h*.03,0,7);x.fill()}}
+      if(pat==='heart'){x.save();x.translate(0,L*.33);heartPath(x,h*.13);x.fillStyle='#fff';x.fill();x.restore()}
+      x.restore()}
+    x.fillStyle='#e0457b';[sx,sx+sw].forEach(px=>{x.beginPath();x.arc(Math.min(Math.max(px,X+h*.05),X+W-h*.05),y0,h*.05,0,7);x.fill()})}
+}
+function balloon(x,cx,cy,r,col){
+  x.save();x.translate(cx,cy);x.strokeStyle='#d6336c';x.lineWidth=r*.06;x.beginPath();x.moveTo(0,r*1.05);x.bezierCurveTo(r*.25,r*1.4,-r*.25,r*1.7,0,r*2.1);x.stroke();
+  x.beginPath();x.ellipse(0,0,r*.82,r,0,0,7);x.fillStyle=col;x.fill();
+  x.beginPath();x.moveTo(-r*.14,r*1.1);x.lineTo(r*.14,r*1.1);x.lineTo(0,r*.92);x.closePath();x.fill();
+  x.beginPath();x.ellipse(-r*.3,-r*.38,r*.16,r*.26,-.5,0,7);x.fillStyle='rgba(255,255,255,.55)';x.fill();x.restore();
+}
+function sticker(x,kind,cx,cy,r,col){
+  // little sticker with a white outline
+  x.save();x.translate(cx,cy);x.rotate(kind==='star'?-.2:.12);x.lineJoin='round';
+  const shape=()=>{
+    if(kind==='star')starPath(x,r);
+    else if(kind==='heart')heartPath(x,r*1.05);
+    else if(kind==='crown'){x.beginPath();x.moveTo(-r,r*.55);x.lineTo(-r,-r*.35);x.lineTo(-r*.5,r*.05);x.lineTo(0,-r*.7);x.lineTo(r*.5,r*.05);x.lineTo(r,-r*.35);x.lineTo(r,r*.55);x.closePath()}
+    else{x.beginPath();x.moveTo(0,0);x.bezierCurveTo(-r*.6,-r*.7,-r*1.15,-r*.3,-r*1.05,r*.05);x.bezierCurveTo(-r*.95,r*.45,-r*.45,r*.4,0,0);x.bezierCurveTo(r*.45,r*.4,r*.95,r*.45,r*1.05,r*.05);x.bezierCurveTo(r*1.15,-r*.3,r*.6,-r*.7,0,0);x.closePath()}};
+  shape();x.lineWidth=r*.34;x.strokeStyle='#fff';x.stroke();x.fillStyle=col;shape();x.fill();
+  if(kind==='crown'){x.fillStyle='#fff';[-r,0,r].forEach(px=>{x.beginPath();x.arc(px,px?-r*.38:-r*.72,r*.12,0,7);x.fill()})}
+  if(kind==='bow'){x.beginPath();x.arc(0,0,r*.2,0,7);x.fillStyle='#d6336c';x.fill()}
+  x.restore();
+}
+function portraitLayout(x,ox,oy,W,H){
+  // pink birthday print: 2x2 rounded photos with white frames and stickers, bunting on top, name block underneath
+  const s=W/800,m=Math.round(36*s),g=Math.round(26*s),T=Math.round(222*s);
+  const bh=Math.round(78*s),pw=Math.floor((W-2*m-g)/2),ph=Math.floor((H-2*m-g-T-bh-g)/2);
+  const gx=ox+Math.round((W-2*pw-g)/2),gy=oy+m+bh+g,rad=Math.round(20*s);
+  const bg=x.createLinearGradient(0,oy,0,oy+H);bg.addColorStop(0,'#ffe3ee');bg.addColorStop(1,'#ffd1e1');x.fillStyle=bg;x.fillRect(ox,oy,W,H);
+  // white polka dots + little hearts in the background
+  {x.save();x.globalAlpha=.55;x.fillStyle='#fff';const st=34*s;for(let yy=oy+st/2,r=0;yy<oy+H;yy+=st,r++)for(let xx=ox+(r%2?st/2:0);xx<ox+W;xx+=st){x.beginPath();x.arc(xx,yy,3.2*s,0,7);x.fill()}
+   let sd=5;const R=()=>(sd=(sd*16807)%2147483647)/2147483647;x.globalAlpha=.5;for(let i=0;i<26;i++){x.save();x.translate(ox+R()*W,oy+R()*H);x.rotate((R()-.5)*.8);heartPath(x,(6+R()*6)*s);x.fillStyle=i%2?'#f8a5c2':'#fff';x.fill();x.restore()}x.restore()}
+  pinkBand(x,ox+m,oy+m,W-2*m,bh);
+  const kinds=['crown','heart','bow','star'],cols=['#f5b8cf','#f06292','#f06292','#f7c948'],corners=[[0,0],[1,0],[0,1],[1,1]];
+  shots.forEach((sh,i)=>{const a=gx+(i%2)*(pw+g),b=Math.round(gy+Math.floor(i/2)*(ph+g)),bw=Math.round(8*s);
+    x.save();x.shadowColor='rgba(214,51,108,.25)';x.shadowBlur=14*s;x.shadowOffsetY=5*s;x.fillStyle='#fff';rr(x,a-bw,b-bw,pw+2*bw,ph+2*bw,rad+bw);x.fill();x.restore();
+    x.save();rr(x,a,b,pw,ph,rad);x.clip();drawCover(x,sh,a,b,pw,ph);x.restore();
+    const [cxr,cyr]=corners[i];sticker(x,kinds[i],a+(cxr?pw-8*s:8*s),b+(cyr?ph-8*s:8*s),24*s,kinds[i]==='crown'?'#f7c948':cols[i])});
+  const top=gy+2*ph+g,cy=top+(oy+H-top)/2,cx=ox+W/2,tw=W-2*m-170*s;
+  balloon(x,ox+m+46*s,cy-40*s,34*s,'#f06292');balloon(x,ox+m+96*s,cy-18*s,28*s,'#c9a7eb');
+  balloon(x,ox+W-m-46*s,cy-40*s,34*s,'#f8a5c2');balloon(x,ox+W-m-96*s,cy-18*s,28*s,'#f06292');
+  x.textBaseline='middle';x.textAlign='center';
+  x.fillStyle='#e0457b';fitScript(x,TITLE,tw,Math.round(66*s));x.fillText(TITLE,cx,cy-52*s);
+  for(let d=-4;d<=4;d++){x.save();x.translate(cx+d*15*s,cy+4*s);if(d%2===0){heartPath(x,(d?5:7)*s);x.fillStyle=d?'#f8a5c2':'#f06292'}else{x.beginPath();x.arc(0,0,2.8*s,0,7);x.fillStyle='#c9a7eb'}x.fill();x.restore()}
+  x.fillStyle='#d6336c';x.font=`600 ${Math.round(26*s)}px Fredoka, sans-serif`;x.fillText(SUB,cx,cy+38*s);
+  fitSpaced(x,YEAR,tw,Math.round(22*s),7*s);x.font=`700 ${Math.round(22*s)}px Fredoka, sans-serif`;spaced(x,YEAR,cx,cy+74*s,7*s);
+}
+function stripColor(){const W=1200,H=1800,c=document.createElement('canvas');c.width=W;c.height=H;portraitLayout(c.getContext('2d'),0,0,W,H);return c}
+
+// ---------- receipt (1-bit for thermal printer) ----------
+function drawQr(x,link,X,Y,size){const q=qrcode(0,'M');q.addData(link);q.make();const n=q.getModuleCount(),m=size/(n+2);
+  x.fillStyle='#fff';x.fillRect(X,Y,size,size);x.fillStyle='#000';
+  for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect(Math.floor(X+(k+1)*m),Math.floor(Y+(r+1)*m),Math.ceil(m),Math.ceil(m))}
+function buildReceipt(link){
+  // full-colour 4x6 inch print at 300 dpi (1200x1800), optional nudge in mm
+  const W=1200,H=1800,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  portraitLayout(x,Math.round((+cfg.offX||0)*12),Math.round((+cfg.offY||0)*12),W,H);
+  return {canvas:c,bits:null,W,H};
+}
+function mono(c,photos){
+  const W=c.width,H=c.height,x=c.getContext('2d'),im=x.getImageData(0,0,W,H),d=im.data,g=new Float32Array(W*H),bits=new Uint8Array(W*H);
+  for(let i=0;i<W*H;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+  const inP=new Uint8Array(W*H);
+  photos.forEach(([px,py,pw,ph])=>{for(let yy=py;yy<py+ph&&yy<H;yy++)for(let xx=px;xx<px+pw;xx++){const i=yy*W+xx;inP[i]=1;g[i]=Math.min(255,Math.max(0,(g[i]-128)*1.1+128+6))}});
+  const st=cfg.style||'fine',P=6,R2=Math.SQRT1_2;
+  for(let yy=0;yy<H;yy++)for(let xx=0;xx<W;xx++){const i=yy*W+xx;
+    if(!inP[i]){bits[i]=g[i]<140?1:0;continue}
+    if(st==='bold'){bits[i]=g[i]<118?1:0;continue}
+    if(st==='halftone'){let u=((xx+yy)*R2)%P,v=((xx-yy)*R2)%P;if(v<0)v+=P;u-=P/2;v-=P/2;const t=Math.min(1,Math.PI*(u*u+v*v)/(P*P));bits[i]=(255-g[i])/255>t?1:0;continue}
+    const old=g[i],nw=old<128?0:255,e=old-nw;bits[i]=nw?0:1;
+    if(xx+1<W&&inP[i+1])g[i+1]+=e*7/16;
+    if(yy+1<H){if(xx>0&&inP[i+W-1])g[i+W-1]+=e*3/16;if(inP[i+W])g[i+W]+=e*5/16;if(xx+1<W&&inP[i+W+1])g[i+W+1]+=e/16}}
+  for(let i=0;i<W*H;i++){const v=bits[i]?0:255;d[i*4]=d[i*4+1]=d[i*4+2]=v;d[i*4+3]=255}
+  x.putImageData(im,0,0);return {canvas:c,bits,W,H};
+}
+function escpos(r){if(!r.bits)throw new Error('Bluetooth printing only works with 58/80 mm receipt printers. Choose Send to printer app.');
+  const bpr=r.W/8,parts=[Uint8Array.of(0x1B,0x40)];
+  for(let y0=0;y0<r.H;y0+=96){const h=Math.min(96,r.H-y0),d=new Uint8Array(bpr*h);
+    for(let y=0;y<h;y++)for(let x=0;x<r.W;x++)if(r.bits[(y0+y)*r.W+x])d[y*bpr+(x>>3)]|=0x80>>(x&7);
+    parts.push(Uint8Array.of(0x1D,0x76,0x30,0,bpr&255,bpr>>8,h&255,h>>8),d)}
+  parts.push(Uint8Array.of(0x1B,0x64,4));
+  const out=new Uint8Array(parts.reduce((a,p)=>a+p.length,0));let o=0;parts.forEach(p=>{out.set(p,o);o+=p.length});return out;
+}
+
+// ---------- Bluetooth printer ----------
+const SVC=['000018f0-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2','49535343-fe7d-4ae5-8fa9-9fafd205e455','0000ff00-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb','0000fee7-0000-1000-8000-00805f9b34fb'];
+let dev=null,chr=null;
+const bleSt=t=>{$('bleSt').textContent=t};
+async function gatt(){const srv=await dev.gatt.connect();for(const s of await srv.getPrimaryServices()){let cs=[];try{cs=await s.getCharacteristics()}catch(e){}
+  for(const c of cs)if(c.properties.writeWithoutResponse||c.properties.write){chr=c;bleSt('Connected to '+(dev.name||'printer')+' ✓');return}}throw new Error('No printable channel found on this printer')}
+$('bleBtn').onclick=async()=>{
+  if(!navigator.bluetooth){bleSt('This browser has no Bluetooth. On iPad, open this page in the Bluefy browser.');return}
+  try{dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:SVC});
+    dev.addEventListener('gattserverdisconnected',()=>{chr=null;bleSt('Printer disconnected — it will reconnect on the next print.')});
+    bleSt('Connecting…');await gatt()}catch(e){bleSt('Could not connect: '+(e.message||e))}
+};
+async function sendBLE(bytes){
+  if(!chr){if(!dev)throw new Error('Printer not connected — open settings and connect it');await gatt()}
+  const fast=chr.properties.writeWithoutResponse,CH=fast?100:180;
+  for(let i=0;i<bytes.length;i+=CH){const p=bytes.slice(i,i+CH);if(fast){await chr.writeValueWithoutResponse(p);await wait(10)}else await chr.writeValue(p)}
+}
+async function shareReceipt(){
+  const b=await new Promise(r=>receipt.canvas.toBlob(r,'image/png')),f=new File([b],'receipt.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f]});
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='receipt.png';a.click()}
+}
+async function print(){
+  if(cfg.mode==='ble'){$('doneSt').textContent='Printing your receipt…';
+    try{await sendBLE(escpos(receipt));$('doneSt').textContent='Take your receipt! Scan the QR to download your photo.'}
+    catch(e){$('doneSt').textContent='Printing failed: '+(e.message||e);$('printBtn').classList.remove('hide')}}
+  else if(cfg.mode==='share'){try{await shareReceipt()}catch(e){}}
+}
+$('testBtn').onclick=async()=>{
+  const c=document.createElement('canvas');c.width=640;c.height=480;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,640,0);g.addColorStop(0,'#000');g.addColorStop(1,'#fff');x.fillStyle=g;x.fillRect(0,0,640,480);
+  const keep=shots;shots=[c,c,c];receipt=buildReceipt(cfg.folder||'https://drive.google.com');shots=keep;
+  if(cfg.mode==='share'){shareReceipt().catch(()=>{});return}
+  try{bleSt('Printing test…');await sendBLE(escpos(receipt));bleSt('Test sent ✓')}catch(e){bleSt('Test failed: '+(e.message||e))}
+};
+
+// ---------- upload to Google Drive ----------
+function jsonp(params){return new Promise((ok,no)=>{
+  const cb='pb'+Date.now()+Math.floor(Math.random()*1e4),sc=document.createElement('script');
+  const clean=()=>{clearTimeout(t);try{delete window[cb]}catch(e){}sc.remove()};
+  const t=setTimeout(()=>{clean();no(new Error('no answer from the script (check Who has access: Anyone)'))},15000);
+  window[cb]=d=>{clean();ok(d)};sc.onerror=()=>{clean();no(new Error('the script link was refused (check Who has access: Anyone, and the /exec link)'))};
+  sc.src=cfg.script+(cfg.script.includes('?')?'&':'?')+new URLSearchParams(Object.assign({},params,{callback:cb}));document.head.appendChild(sc)})}
+async function upload(c){
+  if(!cfg.script)return null;
+  const name='naira-2nd-birthday-'+new Date().toISOString().slice(5,19).replace(/[:T]/g,'-')+'-'+Math.floor(Math.random()*1e4)+'.jpg';
+  const body=JSON.stringify({key:cfg.key,name,data:c.toDataURL('image/jpeg',.9).split(',')[1]});
+  try{const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),30000);
+    const r=await fetch(cfg.script,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},signal:ctl.signal,body});clearTimeout(t);
+    const j=await r.json();if(!j.ok)throw new Error(j.error||'upload failed');return j.view}
+  catch(e){if(e.name==='AbortError'||(e.message&&!/load failed|failed to fetch|networkerror|json/i.test(e.message)))throw e}
+  // fallback for Safari: send without reading the reply, then ask the script for the link
+  await fetch(cfg.script,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body});
+  let last='not found';
+  for(let i=0;i<5;i++){await wait(2000);const j=await jsonp({find:name,key:cfg.key});if(j.ok&&j.view)return j.view;last=j.error||last;if(/key|Exception|Invalid/i.test(last))break}
+  throw new Error(last);
+}
+$('pingBtn').onclick=async()=>{readSet();const el=$('pingSt');if(!cfg.script){el.textContent='❌ Paste the Google script link first.';return}
+  el.textContent='Testing…';try{const j=await jsonp({ping:1,key:cfg.key});el.textContent=j.ok?'✅ '+j.message:'❌ '+j.error}catch(e){el.textContent='❌ '+e.message}};
+
+// ---------- finish ----------
+function qrSvg(el,link){if(!link||!window.qrcode){el.innerHTML='';return}const q=qrcode(0,'M');q.addData(link);q.make();el.innerHTML=q.createSvgTag({cellSize:8,margin:2,scalable:true})}
+async function finish(){
+  try{await Promise.all([document.fonts.load(SCRIPT(60)),document.fonts.load('700 30px Fredoka')])}catch(e){}
+  showMsg('Saving your photos…');
+  let link=null,err='';try{link=await upload(stripColor())}catch(e){err=e.name==='AbortError'?'timed out':(e.message||'error')}
+  const qrLink=link||cfg.folder||'';
+  receipt=buildReceipt(qrLink);showMsg('');
+  $('rcImg').src=receipt.canvas.toDataURL('image/png');qrSvg($('qrBig'),qrLink);
+  $('driveSt').textContent=link?'✅ Saved to Google Drive. Scan to download your photo.':(cfg.script?`❌ Not saved to Drive: ${err}`:'❌ Not saved to Drive: no Google script link in settings.');$('doneSt').textContent='';
+  $('printBtn').classList.toggle('hide',cfg.mode!=='share');
+  $('done').classList.remove('hide');
+  clearTimeout(doneTimer);doneTimer=setTimeout(reset,DONE_SECS*1000);
+  if(cfg.mode==='ble')print();
+}
+function reset(){clearTimeout(doneTimer);$('done').classList.add('hide');shots=[];thumbs();busy=false;$('idle').classList.remove('hide');try{wake&&wake.release()}catch(e){}}
+$('againBtn').onclick=reset;
+$('printBtn').onclick=()=>{$('printBtn').classList.toggle('hide',cfg.mode!=='share');print()};
+
+// ---------- settings (press and hold the gear) ----------
+let hold=null;
+$('gear').addEventListener('pointerdown',()=>{hold=setTimeout(openSet,900)});
+['pointerup','pointerleave','pointercancel'].forEach(ev=>$('gear').addEventListener(ev,()=>clearTimeout(hold)));
+function openSet(){$('sScript').value=cfg.script;$('sKey').value=cfg.key;$('sFolder').value=cfg.folder;$('sMode').value=cfg.mode;$('sWidth').value=String(cfg.width);$('sCam').value=cfg.cam;$('sZoom').value=String(cfg.zoom||1.3);listCams();$('sStyle').value=cfg.style||'fine';$('sOffX').value=cfg.offX||'';$('sOffY').value=cfg.offY||'';
+  if(!navigator.bluetooth)bleSt('No Bluetooth in this browser. For Bluetooth printing on iPad, open this page in Bluefy.');$('settings').classList.remove('hide')}
+async function listCams(){try{const ds=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
+  $('sDev').innerHTML='<option value="">Front camera (default)</option>'+ds.map((d,i)=>`<option value="${d.deviceId}">${(d.label||'Camera '+(i+1)).replace(/</g,'&lt;')}</option>`).join('');$('sDev').value=cfg.dev||''}catch(e){}}
+function readSet(){const oldDev=cfg.dev;cfg.script=$('sScript').value.trim();cfg.key=$('sKey').value.trim();cfg.folder=$('sFolder').value.trim();cfg.mode=$('sMode').value;cfg.width=$('sWidth').value==='label'?'label':+$('sWidth').value;cfg.cam=$('sCam').value;cfg.zoom=+$('sZoom').value;applyZoom();cfg.style=$('sStyle').value;cfg.dev=$('sDev').value;cfg.offX=+$('sOffX').value||0;cfg.offY=+$('sOffY').value||0;saveCfg();idleQr();if(cfg.dev!==oldDev){const st=$('vid').srcObject;if(st)st.getTracks().forEach(t=>t.stop());$('vid').srcObject=null;startCam()}}
+['sScript','sKey','sFolder','sMode','sWidth','sCam','sZoom','sDev','sStyle','sOffX','sOffY'].forEach(id=>$(id).addEventListener('change',readSet));
+$('closeSet').onclick=()=>{readSet();$('settings').classList.add('hide')};
+function idleQr(){$('idleQr').classList.toggle('hide',!cfg.folder);qrSvg($('idleQrS'),cfg.folder)}
+
+thumbs();idleQr();applyZoom();startCam();fitView();setTimeout(()=>{if(!$('vid').videoWidth&&camErr)showCamErr()},3500);
+if(!cfg.script)setTimeout(()=>{if(!busy)openSet()},600);
+}
+</script>
+</body>
+</html>
